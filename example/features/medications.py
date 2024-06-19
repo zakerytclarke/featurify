@@ -1,4 +1,5 @@
 from featurify.feature import Feature, feature
+from featurify.adapter import csv_feature
 from datetime import datetime
 import pandas as pd
 
@@ -6,15 +7,15 @@ import pandas as pd
     name="fhir_medications",
     schema=[
         Feature(name="user_id", type=str, primary_key=True),
-        Feature(name="timestamp", type=datetime, sort_key=True),
-        Feature(name="end_timestamp", type=datetime),
+        Feature(name="timestamp", type="datetime64[ns]", sort_key=True),
+        Feature(name="end_timestamp", type="datetime64[ns]"),
         Feature(name="encounter_id", type=str),
         Feature(name="code", type=str),
         Feature(name="description", type=str),
     ]
 )
-def fhir_medications():
-    medications_df = pd.read_csv("https://zclarke.dev/synthea_medical_dataset/medications.csv")
+@csv_feature("https://zclarke.dev/synthea_medical_dataset/medications.csv")
+def fhir_medications(medications_df):
     medications_df["user_id"] =  medications_df["PATIENT"]
     medications_df["timestamp"] =  pd.to_datetime(medications_df["START"])
     medications_df["end_timestamp"] =  pd.to_datetime(medications_df["STOP"])

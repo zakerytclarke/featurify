@@ -1,6 +1,5 @@
 from featurify.feature_store import FeatureStore
 
-
 from example.features.allergies import fhir_allergies
 from example.features.claims import fhir_claims
 from example.features.conditions import fhir_conditions
@@ -28,7 +27,6 @@ feature_store = FeatureStore(
         fhir_procedures
     ]
 )
-
 
 
 feature_store.launch()
