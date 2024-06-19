@@ -77,15 +77,19 @@ def streamlit_app(feature_store):
     # Streamlit app
     st.title('Featurify')
 
-    menu = ["Dashboard", "Feature Store", "Visualization", "About"]
+    menu = ["Dashboard", "Feature Store", "Data Explorer", "Visualization", "About"]
     choice = st.sidebar.selectbox("Menu", menu)
 
     # Home section
+    if choice == "Dashboard":
+        st.header("Dashboard")
+        st.write("You have 10 features")
+   
     if choice == "Feature Store":
         st.header("Feature Store")
         
         for feature_name in feature_store.features:
-            feature = feature_store.get_feature(feature_name)
+            feature = feature_store.get_feature_group(feature_name)
 
             
             with st.expander(f"{feature_name}"):
@@ -95,9 +99,30 @@ def streamlit_app(feature_store):
                 st.text(f"Description: {feature.description}")
                 
                 st.subheader("Schema")
-                st.json(feature.schema)
+
+                st.json({feature.name:feature.type for feature in feature.schema})
 
                 st.divider()
+
+    # Home section
+    if choice == "Data Explorer":
+        st.header("Data Explore")
+        feature_names = feature_store.features
+        feature_name = st.selectbox("Select a Feature", feature_names)
+
+        if feature_name in feature_names:
+            with st.spinner(text="Loading Feature..."):
+                feature_df = feature_store.compute_feature_group(feature_name)
+                st.subheader("Feature Data")
+                st.dataframe(feature_df)
+                st.subheader("Feature Statistics")
+                st.dataframe(feature_df.describe())
+        
+        st.code(f'''
+        from featurify import feature_store
+                
+        feature_store.compute_feature('{feature_name}')
+        ''', language="python")
     
     if choice == "Visualization":
         st.header("Feature DAG")    

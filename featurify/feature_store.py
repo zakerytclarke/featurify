@@ -1,59 +1,89 @@
-from typing import Optional, List, Dict, Type
+from typing import Optional, List, Callable
 import pandas as pd
-from featurify.feature import Feature
-from featurify.streamlit.app import streamlit_app
-class FeatureStore:
-    def __init__(self, name: str, description: str, features: Optional[List[Feature]] = None):
-        """
-        Initialize a FeatureStore object.
+from featurify.feature import FeatureGroup  # assuming this is the path to your refactored Feature class
+from featurify.streamlit.app import streamlit_app  # assuming this is the path to your Streamlit app
 
-        :param name: Name of the FeatureStore.
-        :param description: Description of the FeatureStore.
-        :param features: Optional list of Feature objects to initialize the store with.
+class ComputeSettings:
+    mode: str = "offline"
+    read_from_cache: bool = True
+    write_to_cache: bool = True
+    online_store: str
+    offline_store: str
+
+class FeatureStore:
+    def __init__(self, name: str, description: str, features: Optional[List[Callable]] = None):
+        """
+        Initializes a new Feature Store with a given name and description.
+
+        Args:
+            name (str): The name of the feature store.
+            description (str): A brief description of what the feature store contains or represents.
+            features (Optional[List[Callable]]): A list of decorated feature functions which are converted into Feature objects.
         """
         self.name = name
         self.description = description
-        self.features = {feature.name: feature for feature in features}
+        self.features = {f.feature.name: f.feature for f in features} if features else {}
+        # self.feature_storage = 
+        # self.merge_settings = 
 
-    def launch(self):
+    def get_feature_group(self, feature_name: str) -> Optional[FeatureGroup]:
         """
-        Launch the Streamlit app for the FeatureStore.
-        """
-        streamlit_app(self)
+        Retrieve a feature by name from the store.
 
-    def get_feature(self, feature_name: str) -> Optional[Feature]:
-        """
-        Retrieve a feature by name.
+        Args:
+            feature_name (str): The name of the feature to retrieve.
 
-        :param feature_name: The name of the feature to retrieve.
-        :return: The Feature object if found, else None.
+        Returns:
+            Feature: The feature object if found, else None.
         """
         return self.features.get(feature_name)
 
-    def compute_feature(self, feature_name: str, domain: pd.DataFrame=None) -> pd.DataFrame:
-        """
-        Compute the given feature for the provided domain DataFrame.
+    def define_feature_group(self, feature:FeatureGroup, overwrite=False):
+        self.features[feature_name]
 
-        :param feature: The Feature object to compute.
-        :param domain: The domain DataFrame to compute the feature on.
-        :return: A DataFrame with the computed feature.
+
+    def test_feature_store(self):
+        # Ensure that all depedencies are accounted for
+
+        # Ensure that all of the types match up 
+
+        # Ensure that there are not features with
+        pass
+
+    def compute_feature_group(self, feature_name: str, domain: pd.DataFrame = None) -> pd.DataFrame:
         """
-        # Check if the feature has dependencies
-        feature = self.get_feature(feature_name)
+        Compute the specified feature group using its definition and any necessary dependencies.
+
+        Args:
+            feature_name (str): The name of the feature to compute.
+            domain (pd.DataFrame): A DataFrame representing the domain data on which the feature should be computed.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing only the columns specified in the feature's schema.
+        """
+        feature = self.get_feature_group(feature_name)
+        if not feature:
+            raise ValueError(f"Feature {feature_name} not found in the feature store.")
 
         if feature.dependencies:
-            # Recursively compute dependencies
-            dependency_results = {}
-            for dep_name in feature.dependencies:
-                dependency_results[dep_name] = self.compute_feature(dep_name, domain)
-            # Compute the feature using the results of its dependencies
-            result = feature.func(*[depdency_df.copy() for depdency_df in dependency_results.values()])
+            dependency_data_frames = {dep: self.compute_feature(dep, domain) for dep in feature.dependencies}
+            args = [dependency_data_frames[dep] for dep in feature.dependencies]
+            result = feature.func(*args)
         else:
-            # Compute the feature directly if no dependencies
             result = feature.func(domain)
-        
-        # Ensure the result DataFrame is cast to the appropriate types as defined in the feature's schema
-        for col, dtype in feature.schema.items():
-            result[col] = result[col].astype(dtype)
-        
-        return result
+
+        # Restrict the output to only include columns specified in the schema
+        output_df = pd.DataFrame()
+        for ft in feature.schema:
+            if ft.name in result.columns:
+                output_df[ft.name] = result[ft.name].astype(ft.type)
+            else:
+                raise ValueError(f"Column {ft.name} expected by schema but not produced by feature {feature_name}.")
+
+        return output_df
+
+    def launch(self):
+        """
+        Launches a Streamlit app configured to use this Feature Store.
+        """
+        streamlit_app(self)

@@ -37,9 +37,9 @@ def fhir_patients(patients_df):
     schema=[
         Feature(name="user_id", type=str, primary_key=True),
         Feature(name="age", type=int),
-    ]
+    ],
+    dependencies=[fhir_patients]
 )
-@csv_feature("https://zclarke.dev/synthea_medical_dataset/patients.csv")
 def fhir_patients(patients_df):
     patients_df["user_id"] =  patients_df["patient"]
     patients_df["date_of_birth"] =  pd.to_datetime(patients_df["birthdate"])
