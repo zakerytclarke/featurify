@@ -59,7 +59,7 @@ def fhir_conditions(conditions_df):
     dependencies=["fhir_conditions"]
 )
 def diabetes_diagnosis(conditions_df):
-    df = conditions_df[conditions_df.description.isin(["Diabetes","Prediabetes"])]
-    
+    df = conditions_df[conditions_df.description.isin(["Diabetes","Prediabetes"])].reset_index(drop=True)
+    df["diagnosed_diabetes"] = True
     return df
 
