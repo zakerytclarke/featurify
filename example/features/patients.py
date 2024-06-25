@@ -38,9 +38,9 @@ def fhir_patients(patients_df):
         Feature(name="user_id", type=str, primary_key=True),
         Feature(name="age", type=int),
     ],
-    dependencies=[fhir_patients]
+    dependencies=["fhir_patients"]
 )
-def fhir_patients(patients_df):
+def age(patients_df):
     patients_df["user_id"] =  patients_df["patient"]
     patients_df["date_of_birth"] =  pd.to_datetime(patients_df["birthdate"])
     patients_df["date_of_death"] =  pd.to_datetime(patients_df["deathdate"])
